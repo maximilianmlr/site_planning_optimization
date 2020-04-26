@@ -7,7 +7,7 @@ import geopy.distance
 
 plz_nrw = pd.read_csv('C:/Users/maxim/Documents/GitHub/location_optimization/Datasets/plz_nrw.csv', encoding='unicode_escape')
 plz_nrw = pd.DataFrame(plz_nrw)
-customers = pd.read_csv('C:/Users/maxim/Documents/GitHub/location_optimization/Datasets/plz_nrw.csv', encoding='unicode_escape')
+distances = pd.read_csv('C:/Users/maxim/Documents/GitHub/location_optimization/Datasets/plz_nrw.csv', encoding='unicode_escape')
 customers = pd.DataFrame(customers)
 
 plz_nrw['open'] = 0
