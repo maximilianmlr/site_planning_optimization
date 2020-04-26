@@ -8,7 +8,11 @@ plz_nrw = pd.DataFrame(plz_nrw)
 customers = pd.read_csv('C:/Users/maxim/Documents/GitHub/location_optimization/Datasets/plz_nrw.csv', encoding='unicode_escape')
 customers = pd.DataFrame(customers)
 
+c = pd.DataFrame(columns=plz_nrw['plz'], index=plz_nrw['plz'])
 
-c = [(geopy.distance.distance((plz_nrw.loc[i, 'latitude'], plz_nrw.loc[i, 'longitude']), (customers.loc[k, 'latitude'], customers.loc[k, 'longitude'])).m) for i in range(5) for k in range(5)]
+for(i in range(len(c.columns)))
+    for(k in range(len(c.rows)))
+        
+
 print(c)
 
