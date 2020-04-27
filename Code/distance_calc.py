@@ -19,6 +19,11 @@ def get_distance(col):
 
 distances = square.progress_apply(get_distance, axis=1).T
 
+def units(input_df):
+    return input_df.km
+
+distances = distances.applymap(units)
+
 distances.index = plz_nrw['plz']
 distances.columns = plz_nrw['plz']
 
