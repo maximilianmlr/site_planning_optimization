@@ -28,4 +28,3 @@ distances.index = plz_nrw['plz']
 distances.columns = plz_nrw['plz']
 
 distances.to_csv('C:/Users/maxim/Documents/GitHub/location_optimization/Datasets/distances.csv')
-
