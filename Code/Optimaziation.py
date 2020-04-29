@@ -17,11 +17,11 @@ locations['fixed_costs'] = 0
 customers['demand'] = 0
 
 rng_cost_fx_low = range(10000, 20000)
-rng_cost_fx_high = range(10, 100)
+rng_cost_fx_high = range(100000, 200000)
 locations['fixed_costs'] = [random.choice(rng_cost_fx_low) for x in locations['fixed_costs']]
 
-rng_demand_low = range(1, 10)
-rng_demand_high = range(10, 100)
+rng_demand_low = range(10, 20)
+rng_demand_high = range(100, 300)
 customers['demand'] = [random.choice(rng_demand_low) for x in customers['demand']]
 
 # Add/Drop Heuristik
@@ -30,8 +30,6 @@ customers['demand'] = [random.choice(rng_demand_low) for x in customers['demand'
 I = pd.DataFrame()
 z_old = 1000000000000000
 z_new = z_old-1
-z_list = []
-var_list = []
 z_fx = 0
 
 while z_new < z_old:
@@ -49,4 +47,4 @@ while z_new < z_old:
         locations['open'].iloc[i_low] = 1
         I = I.append(pd.DataFrame(distances.iloc[i_low,:]).T, sort=False)
 
-print(locations[locations['open'] == 1])
+print("Folgende Standorte wurden eröffnet: \n", locations[locations['open'] == 1], "\nDie gesamten Kosten betragen: ", z_old)
