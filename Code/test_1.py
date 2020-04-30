@@ -14,13 +14,13 @@ class locations:
     def __init__(self, name, plz_nrw, rng):
         self.name = name
         self.locations = plz_nrw
+        self.rng = rng
         self.locations['open'] = 0
-        self.locations['fixed_cost'] = 0
-
-    def calc_fixcost(self):
-        self.locations['fixed_cost'] = [random.choice(rng) for x in locations['fixed_costs']]
-
+        self.locations['fixed_costs'] = 0
+        self.locations['fixed_costs'] = [random.choice(self.rng) for x in self.locations['fixed_costs']]
 
 rng_cost_fx_low = range(10000, 20000)
 loc = locations('low', plz_nrw, rng_cost_fx_low)
-print(loc.locations)
+locations = loc.locations
+
+print(locations)
