@@ -29,17 +29,23 @@ class metaheuristics:
                 self.z_fx = z_fx_store
                 self.locations['open'].iloc[i_low] = 1
                 self.I = self.I.append(pd.DataFrame(self.distances.iloc[i_low,:]).T, sort=False)
-        self.add_z_total = self.z_old
-        self.add_open_locations = self.locations[self.locations['open'] == 1]
-        return [self.add_z_total, self.add_open_locations]
+        return self.z_old, self.locations[self.locations['open'] == 1]
 
 
-
-
-plz_nrw = pd.read_csv('https://raw.githubusercontent.com/mexemt/location_optimization/master/Datasets/plz_nrw.csv', encoding='unicode_escape')
+#plz_nrw = pd.read_csv('https://raw.githubusercontent.com/mexemt/location_optimization/master/Datasets/plz_nrw.csv', encoding='unicode_escape')
+plz_nrw = pd.read_csv('C:/Users/maxim/Documents/GitHub/location_optimization/Datasets/plz_nrw.csv', encoding='unicode_escape')
 plz_nrw = pd.DataFrame(plz_nrw)
-distances = pd.read_csv('https://raw.githubusercontent.com/mexemt/location_optimization/master/Datasets/distances.csv', encoding='unicode_escape', index_col=0)
+distances = pd.read_csv('C:/Users/maxim/Documents/GitHub/location_optimization/Datasets/distances.csv', encoding='unicode_escape', index_col=0)
 distances = pd.DataFrame(distances)
+
+class locations(self, plz_nrw, rng):
+    self.plz_nrw['open'] = 0
+    self.plz_nrw['fixed_costs'] = 0
+
+    def calc_fixcost(self):
+        self.plz_nrw['fixed_cost'] = [random.choice(rng_cost_fx_low) for x in locations['fixed_costs']]
+
+    return self.plz_nrw
 
 locations = pd.DataFrame(plz_nrw['plz'])
 customers = pd.DataFrame(plz_nrw['plz'])
@@ -59,13 +65,7 @@ customers['demand'] = [random.choice(rng_demand_low) for x in customers['demand'
 # Add/Drop Heuristik
 
 # Start Add-Heuristik
-I = pd.DataFrame()
-z_old = 1000000000000000
-z_new = z_old-1
-z_fx = 0
-
-
-    
 
 heuristics = metaheuristics(10000000, locations, distances, customers)
-print("Folgende Standorte wurden eröffnet: \n", heuristics.add_heuristic())
+z, open = heuristics.add_heuristic()
+print('Gesamtkosten: \n', z, '\nEröffnete Standorte: \n', open)
