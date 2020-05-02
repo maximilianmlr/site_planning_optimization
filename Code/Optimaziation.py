@@ -27,12 +27,15 @@ class metaheuristics:
         self.z_old = z_old
         self.z_new = z_old-1
         self.z_fx = 0
+        self.counter = 0
         self.locations = locations
         self.distances = distances
         self.customers = customers
     
     def add_heuristic(self):
         while self.z_new < self.z_old:
+            self.counter = self.counter + 1
+            print("Number of Iterations: ", self.counter)
             self.z_old = self.z_new
             for index, row in self.locations.iterrows():
                 if row['open'] == 0:
@@ -44,17 +47,19 @@ class metaheuristics:
                             i_low = index
             if self.z_new < self.z_old:
                 self.z_fx = z_fx_store
-                self.locations['open'].iloc[i_low] = 1
+                self.locations.loc[self.locations.index[i_low], 'open'] = 1
                 self.I = self.I.append(pd.DataFrame(self.distances.iloc[i_low,:]).T, sort=False)
         return self.z_old, self.locations[self.locations['open'] == 1]
 
 
 
-#plz_nrw = pd.read_csv('https://raw.githubusercontent.com/mexemt/location_optimization/master/Datasets/plz_nrw.csv', encoding='unicode_escape')
-plz_nrw = pd.read_csv('C:/Users/maxim/Documents/GitHub/location_optimization/Datasets/plz_nrw.csv', encoding='unicode_escape')
+plz_nrw = pd.read_csv('https://raw.githubusercontent.com/mexemt/location_optimization/master/Datasets/plz_nrw.csv', encoding='unicode_escape')
+#plz_nrw = pd.read_csv('C:/Users/maxim/Documents/GitHub/location_optimization/Datasets/plz_nrw.csv', encoding='unicode_escape')
 plz_nrw = pd.DataFrame(plz_nrw)
-distances = pd.read_csv('C:/Users/maxim/Documents/GitHub/location_optimization/Datasets/distances.csv', encoding='unicode_escape', index_col=0)
+#distances = pd.read_csv('C:/Users/maxim/Documents/GitHub/location_optimization/Datasets/distances.csv', encoding='unicode_escape', index_col=0)
+distances = pd.read_csv('https://raw.githubusercontent.com/mexemt/location_optimization/master/Datasets/distances.csv', encoding='unicode_escape', index_col=0)
 distances = pd.DataFrame(distances)
+print("Data readed...")
 
 rng_cost_fx_low = range(10000, 20000)
 rng_cost_fx_high = range(100000, 200000)
@@ -65,15 +70,16 @@ rng_demand_high = range(100, 300)
 # Add/Drop Heuristik
 
 # Start Add-Heuristik
-loc = loc('low', plz_nrw, rng_cost_fx_low)
-locations_low = loc.locations
-print(locations_low)
+df_loc = plz_nrw.copy()
+loc = loc('low', df_loc, rng_cost_fx_low)
+locations_df = loc.locations
 
-cust = customers('low', plz_nrw, rng_demand_low)
-customers_low = cust.customers
-print(customers_low)
-print(plz_nrw)
+df_cust = plz_nrw.copy()
+cust = cust('low', df_cust, rng_demand_low)
+customers_df = cust.customers
 
-heuristics = metaheuristics(10000000, locations_low, distances, customers_low)
+heuristics = metaheuristics(10000000, locations_df, distances, customers_df)
+
+print("Starting add heuristic calculation...")
 z, open = heuristics.add_heuristic()
 print('Gesamtkosten: \n', z, '\nEröffnete Standorte: \n', open)
