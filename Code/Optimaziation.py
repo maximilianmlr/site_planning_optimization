@@ -53,8 +53,8 @@ class metaheuristics:
 
     def drop_heuristic(self):
         self.locations['open'] = 1
-        self.I = self.locations
-        self.z_new = sum(self.I['fixed_costs'])
+        self.I = self.distances
+        self.z_new = sum(self.locations['fixed_costs'])
         while self.z_new < self.z_old:
             self.counter = self.counter + 1
             print("Number of iterations: ", self.counter)
@@ -62,7 +62,7 @@ class metaheuristics:
             for index, row in self.locations.iterrows():
                 if row['open'] == 1:
                         z_fix = row['fixed_costs'] - self.z_fx
-                        z = z_fix + sum([a * b for a, b in zip(list(pd.concat([self.I, pd.DataFrame(self.distances.iloc[len(range(index)),:]).T]).min()), list(self.customers.demand))])
+                        z = z_fix + sum([a * b for a, b in zip(list(self.I.drop([row['plz']]).min()), list(self.customers.demand))])
                         if z < self.z_new:
                             self.z_new = z
                             z_fx_store = z_fix
