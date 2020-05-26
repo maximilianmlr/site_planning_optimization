@@ -10,18 +10,26 @@ class loc:
         self.locations = data
         self.rng = rng_l
         self.locations['open'] = 0
-        self.locations['fixed_costs'] = 0 # was 0
-        self.locations['fixed_costs'] = [random.choice(self.rng) for x in self.locations['fixed_costs']]
+        if bugfixing == 0:
+            self.locations['fixed_costs'] = 0 # was 0
+            self.locations['fixed_costs'] = [random.choice(self.rng) for x in self.locations['fixed_costs']]
+        else:
+            self.locations['fixed_costs'] = rng_l # was 0
 
 class cust:
     def __init__(self, name, data, rng_c):
         self.name = name
         self.customers = data
         self.rng = rng_c
-        self.customers['demand'] = 0 # was 0
-        self.customers['demand'] = [random.choice(self.rng) for x in self.customers['demand']]
+        if bugfixing == 0:
+            self.customers['demand'] = 0
+            self.customers['demand'] = [random.choice(self.rng) for x in self.customers['demand']]
+        else:
+            self.customers['demand'] = rng_c # was 0
 
-class metaheuristics:
+
+
+class adddrop:
     def __init__(self, z_old, locations, distances, customers):
         self.I = pd.DataFrame()
         self.z_old = z_old
@@ -30,6 +38,7 @@ class metaheuristics:
         self.locations = locations
         self.distances = distances
         self.customers = customers
+
     
     def add_heuristic(self):
         while self.z_new < self.z_old:
@@ -69,42 +78,89 @@ class metaheuristics:
         return self.z_old, self.locations[self.locations['open'] == 1]
 
 
+class simulated_annealing:
+    def __init__(self, locations, distances, customers, alpha, t_end, multiplyer):
+        self.loc_full = locations
+        self.start = locations[locations['open'] == 1]
+        self.best = self.start
+        self.sol = self.start
+        self.T = len(self.start) * multiplyer
+        self.alpha = alpha
+        self.T_end = t_end
+    
+    def create_neighbor(self, locations):
+        i = random.randint(0, len(locations)-1)
+        k = random.randint(0, len(locations)-1)
+        while i == k:
+            k = random.randint(0, len(locations)-1)
+        self.neighbor = locations.copy()
+        self.neighbor.loc[i, 'open'] = 1
+        self.neighbor.loc[k, 'open'] = 0
+        return self.neighbor
+
+    def cal_costs(self, locations, distances, customers):
+        fixcosts = locations.loc[locations['open'] == 1, 'fixed_costs'].sum()
+        varcosts = sum([a * b for a, b in zip(list().min()), list(self.customers.demand))])
+
+    def calculate(self):
+        while self.T > self.T_end:
+            self.xe = self.create_neighbor(self.loc_full)
+            print(self.xe[self.xe['open'] == 1])
+
+
 print("Reading data...")
 # Read in Datasets
 
-plz_nrw = pd.read_csv('https://raw.githubusercontent.com/mexemt/location_optimization/master/Datasets/plz_nrw.csv', encoding='unicode_escape')
-#plz_nrw = pd.read_csv('https://raw.githubusercontent.com/mexemt/location_optimization/master/Datasets/Bugfixing/plz_nrw.csv', encoding='unicode_escape')
+bugfixing = 1
+
+if bugfixing == 0:
+    plz_nrw = pd.read_csv('https://raw.githubusercontent.com/mexemt/location_optimization/master/Datasets/plz_nrw.csv', encoding='unicode_escape')
+else:
+    plz_nrw = pd.read_csv('https://raw.githubusercontent.com/mexemt/location_optimization/master/Datasets/Bugfixing/plz_nrw.csv', encoding='unicode_escape')
+
 plz_nrw = pd.DataFrame(plz_nrw)
 
-distances = pd.read_csv('https://raw.githubusercontent.com/mexemt/location_optimization/master/Datasets/distances.csv', encoding='unicode_escape', index_col=0)
-#distances = pd.read_csv('https://raw.githubusercontent.com/mexemt/location_optimization/master/Datasets/Bugfixing/distances.csv', encoding='unicode_escape', index_col=0)
+if bugfixing == 0:
+    distances = pd.read_csv('https://raw.githubusercontent.com/mexemt/location_optimization/master/Datasets/distances.csv', encoding='unicode_escape', index_col=0)
+else:
+    distances = pd.read_csv('https://raw.githubusercontent.com/mexemt/location_optimization/master/Datasets/Bugfixing/distances.csv', encoding='unicode_escape', index_col=0)
 distances = pd.DataFrame(distances)
 
 # Cost and Demand
 rng_cost_fx_low = range(10000, 20000)
-rng_cost_fx_high = range(100000, 200000)
-#rng_cost_fx_high = (2, 4, 6)
+if bugfixing == 0:
+    rng_cost_fx_high = range(100000, 200000)
+else:
+    rng_cost_fx_high = (2, 4, 6)
 
 rng_demand_low = range(10, 20)
-rng_demand_high = range(100, 300)
-#rng_demand_high = (5, 6, 4)
+if bugfixing == 0:
+    rng_demand_high = range(100, 300)
+else:
+    rng_demand_high = (5, 6, 4)
 
 # Add/Drop Heuristik
 # Start Add-Heuristik
 df_loc = plz_nrw.copy()
-loc = loc('low', df_loc, rng_cost_fx_low)
+loc = loc('low', df_loc, rng_cost_fx_high)
 locations_df = loc.locations
 
 df_cust = plz_nrw.copy()
-cust = cust('low', df_cust, rng_demand_low)
+cust = cust('low', df_cust, rng_demand_high)
 customers_df = cust.customers
 
-#heuristics = metaheuristics(100000000000, locations_df, distances, customers_df)
-#print("Starting add heuristic calculation...")
-#z, open = heuristics.add_heuristic()
-#print('Gesamtkosten: ', z, '\nEröffnete Standorte: \n', open)
+heuristics = adddrop(100000000000, locations_df, distances, customers_df)
+print("Starting add heuristic calculation...")
+z, open = heuristics.add_heuristic()
+print('Gesamtkosten: ', z, '\nEröffnete Standorte: \n', open)
 
-heuristics = metaheuristics(100000000000, locations_df, distances, customers_df)
-print("Starting drop heuristic calculation...")
-z, open = heuristics.drop_heuristic()
-print('Gesamtkosten: ', z, "\nGeöffnete Standorte: \n", open)
+# heuristics = adddrop(100000000000, locations_df, distances, customers_df)
+# print("Starting drop heuristic calculation...")
+# z, open = heuristics.drop_heuristic()
+# print('Gesamtkosten: ', z, "\nGeöffnete Standorte: \n", open)
+
+input_sa = locations_df
+#input_sa.loc[input_sa.plz.isin(open.plz), ['open']] = open[['open']]
+heuristics = adddrop(10000000000, input_sa, distances, customers_df)
+simann = simulated_annealing(input_sa, distances, customers_df, 0.99, 1, 1.5)
+z, open = simann.calculate()
