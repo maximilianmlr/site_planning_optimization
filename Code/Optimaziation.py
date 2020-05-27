@@ -3,6 +3,7 @@ import pandas as pd
 import csv
 from geopy.distance import vincenty
 import random
+from math import exp
 
 class loc:
     def __init__(self, name, data, rng_l):
@@ -83,6 +84,7 @@ class simulated_annealing:
         self.loc_full = locations
         self.start = locations[locations['open'] == 1]
         self.best = self.start
+        self.current = self.best
         self.distances = distances
         self.customers = customers
         self.sol = self.start
@@ -98,22 +100,44 @@ class simulated_annealing:
         self.neighbor = locations.copy()
         self.neighbor.loc[i, 'open'] = 1
         self.neighbor.loc[k, 'open'] = 0
+        print(self.neighbor)
         return self.neighbor
 
     def cal_costs(self, locations, distances, customers):
         #openlocs = locations.loc[locations['open'] == 1]
         open_loc = locations.loc[locations['open'] == 1]
-        open_loc = list(open_loc['plz'])
-        open_dist = distances.loc[open_loc]
+        open_loc_list = list(open_loc['plz'])
+        open_dist = distances.loc[open_loc_list]
 
-        fixcosts = locations['fixed_costs'].sum()
-        varcosts = sum([a * b for a, b in zip(list(self.I.drop([self.row['plz']]).min()), list(self.customers.demand))])
+        self.fixcosts = open_loc['fixed_costs'].sum()
+        self.varcosts = sum([a * b for a, b in zip(list(open_dist.min()), list(self.customers.demand))])
+        self.costs = self.fixcosts + self.varcosts
+        return self.costs
 
     def calculate(self):
+        self.best_costs = self.cal_costs(self.best, self.distances, self.customers)
+        self.initial_costs = self.best_costs
+        self.solution = self.best
         while self.T > self.T_end:
             self.xe = self.create_neighbor(self.loc_full)
-            costs = self.cal_costs(self.xe, self.distances, self.customers)
-            print(self.xe)
+            self.costs = self.cal_costs(self.xe, self.distances, self.customers)
+            if self.costs <= self.initial_costs:
+                self.initial_costs = self.costs
+                self.solution = self.xe.copy()
+                if self.costs < self.best_costs:
+                    self.best_costs = self.costs
+                    self.best = self.xe.copy()
+            else:
+                expo = exp((-(self.costs-self.initial_costs))/self.T)
+                if random.random() <= expo:
+                    self.initial_costs = self.costs
+                    self.solution = self.xe.copy()
+                    print(self.solution)
+            self.T = self.alpha * self.T
+            print(self.T)
+            print(self.costs)
+        return self.best_costs, self.solution.loc[self.solution['open'] == 1]
+
 
 
 print("Reading data...")
@@ -150,11 +174,11 @@ else:
 # Add/Drop Heuristik
 # Start Add-Heuristik
 df_loc = plz_nrw.copy()
-loc = loc('low', df_loc, rng_cost_fx_high)
+loc = loc('low', df_loc, rng_cost_fx_low)
 locations_df = loc.locations
 
 df_cust = plz_nrw.copy()
-cust = cust('low', df_cust, rng_demand_high)
+cust = cust('low', df_cust, rng_demand_low)
 customers_df = cust.customers
 
 heuristics = adddrop(100000000000, locations_df, distances, customers_df)
@@ -168,7 +192,6 @@ print('Gesamtkosten: ', z, '\nEröffnete Standorte: \n', open)
 # print('Gesamtkosten: ', z, "\nGeöffnete Standorte: \n", open)
 
 input_sa = locations_df
-#input_sa.loc[input_sa.plz.isin(open.plz), ['open']] = open[['open']]
-heuristics = adddrop(10000000000, input_sa, distances, customers_df)
-simann = simulated_annealing(input_sa, distances, customers_df, 0.99, 1, 1.5)
+simann = simulated_annealing(input_sa, distances, customers_df, 0.99, 1, 5)
 z, open = simann.calculate()
+print("Beste Lösung: \n", open)
