@@ -83,6 +83,8 @@ class simulated_annealing:
         self.loc_full = locations
         self.start = locations[locations['open'] == 1]
         self.best = self.start
+        self.distances = distances
+        self.customers = customers
         self.sol = self.start
         self.T = len(self.start) * multiplyer
         self.alpha = alpha
@@ -99,19 +101,25 @@ class simulated_annealing:
         return self.neighbor
 
     def cal_costs(self, locations, distances, customers):
-        fixcosts = locations.loc[locations['open'] == 1, 'fixed_costs'].sum()
-        varcosts = sum([a * b for a, b in zip(list().min()), list(self.customers.demand))])
+        #openlocs = locations.loc[locations['open'] == 1]
+        open_loc = locations.loc[locations['open'] == 1]
+        open_loc = list(open_loc['plz'])
+        open_dist = distances.loc[open_loc]
+
+        fixcosts = locations['fixed_costs'].sum()
+        varcosts = sum([a * b for a, b in zip(list(self.I.drop([self.row['plz']]).min()), list(self.customers.demand))])
 
     def calculate(self):
         while self.T > self.T_end:
             self.xe = self.create_neighbor(self.loc_full)
-            print(self.xe[self.xe['open'] == 1])
+            costs = self.cal_costs(self.xe, self.distances, self.customers)
+            print(self.xe)
 
 
 print("Reading data...")
 # Read in Datasets
 
-bugfixing = 1
+bugfixing = 0
 
 if bugfixing == 0:
     plz_nrw = pd.read_csv('https://raw.githubusercontent.com/mexemt/location_optimization/master/Datasets/plz_nrw.csv', encoding='unicode_escape')
