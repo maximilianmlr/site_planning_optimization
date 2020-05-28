@@ -82,29 +82,23 @@ class adddrop:
 class simulated_annealing:
     def __init__(self, locations, distances, customers, alpha, t_end, multiplyer):
         self.loc_full = locations
-        self.start = locations[locations['open'] == 1]
+        self.start = locations
         self.best = self.start
-        self.current = self.best
         self.distances = distances
         self.customers = customers
-        self.sol = self.start
-        self.T = len(self.start) * multiplyer
         self.alpha = alpha
+        self.multiplyer = multiplyer
         self.T_end = t_end
     
     def create_neighbor(self, locations):
-        i = random.randint(0, len(locations)-1)
-        k = random.randint(0, len(locations)-1)
-        while i == k:
-            k = random.randint(0, len(locations)-1)
+        i = random.choice(locations.loc[locations['open']==1].index)
+        k = random.choice(locations.loc[locations['open']==0].index)
         self.neighbor = locations.copy()
-        self.neighbor.loc[i, 'open'] = 1
-        self.neighbor.loc[k, 'open'] = 0
-        print(self.neighbor)
+        self.neighbor.loc[i, 'open'] = 0
+        self.neighbor.loc[k, 'open'] = 1
         return self.neighbor
 
     def cal_costs(self, locations, distances, customers):
-        #openlocs = locations.loc[locations['open'] == 1]
         open_loc = locations.loc[locations['open'] == 1]
         open_loc_list = list(open_loc['plz'])
         open_dist = distances.loc[open_loc_list]
@@ -116,10 +110,11 @@ class simulated_annealing:
 
     def calculate(self):
         self.best_costs = self.cal_costs(self.best, self.distances, self.customers)
+        self.T = self.best_costs * self.multiplyer
         self.initial_costs = self.best_costs
         self.solution = self.best
         while self.T > self.T_end:
-            self.xe = self.create_neighbor(self.loc_full)
+            self.xe = self.create_neighbor(self.solution)
             self.costs = self.cal_costs(self.xe, self.distances, self.customers)
             if self.costs <= self.initial_costs:
                 self.initial_costs = self.costs
@@ -127,15 +122,14 @@ class simulated_annealing:
                 if self.costs < self.best_costs:
                     self.best_costs = self.costs
                     self.best = self.xe.copy()
+                    print(self.best_costs)
             else:
                 expo = exp((-(self.costs-self.initial_costs))/self.T)
                 if random.random() <= expo:
                     self.initial_costs = self.costs
                     self.solution = self.xe.copy()
-                    print(self.solution)
             self.T = self.alpha * self.T
-            print(self.T)
-            print(self.costs)
+            print(self.T, end="\r", flush=True)
         return self.best_costs, self.solution.loc[self.solution['open'] == 1]
 
 
@@ -159,13 +153,13 @@ else:
 distances = pd.DataFrame(distances)
 
 # Cost and Demand
-rng_cost_fx_low = range(10000, 20000)
+rng_cost_fx_low = range(10000, 50000)
 if bugfixing == 0:
     rng_cost_fx_high = range(100000, 200000)
 else:
     rng_cost_fx_high = (2, 4, 6)
 
-rng_demand_low = range(10, 20)
+rng_demand_low = range(100, 200)
 if bugfixing == 0:
     rng_demand_high = range(100, 300)
 else:
@@ -192,6 +186,6 @@ print('Gesamtkosten: ', z, '\nEröffnete Standorte: \n', open)
 # print('Gesamtkosten: ', z, "\nGeöffnete Standorte: \n", open)
 
 input_sa = locations_df
-simann = simulated_annealing(input_sa, distances, customers_df, 0.99, 1, 5)
+simann = simulated_annealing(input_sa, distances, customers_df, 0.999, 1, 5)
 z, open = simann.calculate()
-print("Beste Lösung: \n", open)
+print('Gesamtkosten: ', z, '\nEröffnete Standorte: \n', open)
