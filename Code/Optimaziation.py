@@ -36,9 +36,9 @@ class adddrop:
         self.z_old = z_old
         self.z_new = z_old-1
         self.counter = 0
-        self.locations = locations
-        self.distances = distances
-        self.customers = customers
+        self.locations = locations.copy()
+        self.distances = distances.copy()
+        self.customers = customers.copy()
 
     
     def add_heuristic(self):
@@ -56,7 +56,7 @@ class adddrop:
             if self.z_new < self.z_old:
                 self.locations.loc[self.locations.index[self.i_low], 'open'] = 1
                 self.I = self.I.append(pd.DataFrame(self.distances.iloc[self.i_low,:]).T, sort=False)
-        return self.z_old, self.locations[self.locations['open'] == 1]
+        return self.z_old, self.locations
 
     def drop_heuristic(self):
         self.locations['open'] = 1
@@ -76,7 +76,7 @@ class adddrop:
             if self.z_new < self.z_old:
                 self.locations.loc[self.locations['plz'] == self.i_low, 'open'] = 0
                 self.I = self.I.drop([self.i_low], axis = 0)
-        return self.z_old, self.locations[self.locations['open'] == 1]
+        return self.z_old, self.locations
 
 
 class simulated_annealing:
@@ -155,9 +155,9 @@ class late_acceptance:
         return self.costs
 
     def create_neighbor(self, locations):
-        i = random.sample(list(locations.loc[locations['open']==1].index), k = 1)
+        i = random.sample(list(locations.loc[locations['open']==1].index), k = 5)
         i = random.choice(i)
-        k = random.sample(list(locations.loc[locations['open']==0].index), k = 1)
+        k = random.sample(list(locations.loc[locations['open']==0].index), k = 5)
         k = random.choice(k)
         self.neighbor = locations.copy()
         self.neighbor.loc[i, 'open'] = 0
@@ -240,21 +240,23 @@ customers_df = cust.customers
 
 heuristics = adddrop(100000000000, locations_df, distances, customers_df)
 print("\nStarting add heuristic calculation...\n")
-z, open = heuristics.add_heuristic()
+z, df = heuristics.add_heuristic()
+open = df.loc[df['open'] == 1]
 print('Gesamtkosten: ', z, '\nEröffnete Standorte: \n', open)
+
 
 # heuristics = adddrop(100000000000, locations_df, distances, customers_df)
 # print("Starting drop heuristic calculation...")
 # z, open = heuristics.drop_heuristic()
 # print('Gesamtkosten: ', z, "\nGeöffnete Standorte: \n", open)
 
-input_sa = locations_df
+input_sa = df
 print("\nStarting simulated annealing optimaziation...\n")
 simann = simulated_annealing(input_sa, distances, customers_df, 0.999, 1, 1.5)
 z, open = simann.calculate()
 print('Gesamtkosten: ', z, '\nEröffnete Standorte: \n', open)
 
-input_la = locations_df
+input_la = df
 print("\nStarting late acceptance optimaziation...\n")
 lateacc = late_acceptance(input_la, distances, customers_df, 20, 10000)
 z, open = lateacc.calculate()
