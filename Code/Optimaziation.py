@@ -91,8 +91,10 @@ class simulated_annealing:
         self.T_end = t_end
     
     def create_neighbor(self, locations):
-        i = random.choice(locations.loc[locations['open']==1].index)
-        k = random.choice(locations.loc[locations['open']==0].index)
+        i = random.sample(list(locations.loc[locations['open']==1].index), k = 5)
+        i = random.choice(i)
+        k = random.sample(list(locations.loc[locations['open']==0].index), k = 5)
+        k = random.choice(k)
         self.neighbor = locations.copy()
         self.neighbor.loc[i, 'open'] = 0
         self.neighbor.loc[k, 'open'] = 1
@@ -122,14 +124,14 @@ class simulated_annealing:
                 if self.costs < self.best_costs:
                     self.best_costs = self.costs
                     self.best = self.xe.copy()
-                    print(self.best_costs)
+                    print("New best costs found: ", "{:.2f}".format(self.best_costs))
             else:
                 expo = exp((-(self.costs-self.initial_costs))/self.T)
                 if random.random() <= expo:
                     self.initial_costs = self.costs
                     self.solution = self.xe.copy()
             self.T = self.alpha * self.T
-            print(self.T, end="\r", flush=True)
+            print("Temperature: ", self.T, end="\r", flush=True)
         return self.best_costs, self.solution.loc[self.solution['open'] == 1]
 
 
@@ -153,13 +155,13 @@ else:
 distances = pd.DataFrame(distances)
 
 # Cost and Demand
-rng_cost_fx_low = range(10000, 50000)
+rng_cost_fx_low = range(10000, 20000)
 if bugfixing == 0:
-    rng_cost_fx_high = range(100000, 200000)
+    rng_cost_fx_high = range(100000, 300000)
 else:
     rng_cost_fx_high = (2, 4, 6)
 
-rng_demand_low = range(100, 200)
+rng_demand_low = range(30, 70)
 if bugfixing == 0:
     rng_demand_high = range(100, 300)
 else:
@@ -176,7 +178,7 @@ cust = cust('low', df_cust, rng_demand_low)
 customers_df = cust.customers
 
 heuristics = adddrop(100000000000, locations_df, distances, customers_df)
-print("Starting add heuristic calculation...")
+print("\nStarting add heuristic calculation...\n")
 z, open = heuristics.add_heuristic()
 print('Gesamtkosten: ', z, '\nEröffnete Standorte: \n', open)
 
@@ -186,6 +188,7 @@ print('Gesamtkosten: ', z, '\nEröffnete Standorte: \n', open)
 # print('Gesamtkosten: ', z, "\nGeöffnete Standorte: \n", open)
 
 input_sa = locations_df
-simann = simulated_annealing(input_sa, distances, customers_df, 0.999, 1, 5)
+print("\nStarting simulated annealing optimaziation...\n")
+simann = simulated_annealing(input_sa, distances, customers_df, 0.999, 1, 1.5)
 z, open = simann.calculate()
 print('Gesamtkosten: ', z, '\nEröffnete Standorte: \n', open)
