@@ -49,13 +49,17 @@ class adddrop:
             for self.index, self.row in self.locations.iterrows():
                 if self.row['open'] == 0:
                         self.z_fix = self.row['fixed_costs'] + self.locations.loc[self.locations['open'] == 1, 'fixed_costs'].sum()
-                        self.z = self.z_fix + sum([a * b for a, b in zip(list(pd.concat([self.I, pd.DataFrame(self.distances.iloc[len(range(self.index)),:]).T]).min()), list(self.customers.demand))])
+                        start_time = time.process_time()
+                        i_temp = self.I.append(self.distances.iloc[self.index,:]).min()
+                        end_time = time.process_time()
+                        print("Time in seconds for add heuristic calculation:", end_time - start_time)
+                        self.z = self.z_fix + sum([a * b for a, b in zip(i_temp, self.customers.demand.T)])
                         if self.z < self.z_new:
                             self.z_new = self.z
                             self.i_low = self.index
             if self.z_new < self.z_old:
                 self.locations.loc[self.locations.index[self.i_low], 'open'] = 1
-                self.I = self.I.append(pd.DataFrame(self.distances.iloc[self.i_low,:]).T, sort=False)
+                self.I = self.I.append(self.distances.iloc[self.i_low,:].T, sort=False)
         return self.z_old, self.locations
 
     def drop_heuristic(self):
