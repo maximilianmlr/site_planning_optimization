@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import csv
+import time as time
 from geopy.distance import vincenty
 import random
 from math import exp
@@ -42,6 +43,8 @@ class adddrop:
 
     
     def add_heuristic(self):
+        min = 9999999999
+        start_time = time.process_time()
         while self.z_new < self.z_old:
             self.counter += 1
             print("Number of iterations: ", self.counter)
@@ -49,13 +52,17 @@ class adddrop:
             for self.index, self.row in self.locations.iterrows():
                 if self.row['open'] == 0:
                         self.z_fix = self.row['fixed_costs'] + self.locations.loc[self.locations['open'] == 1, 'fixed_costs'].sum()
-                        self.z = self.z_fix + sum([a * b for a, b in zip(list(pd.concat([self.I, pd.DataFrame(self.distances.iloc[len(range(self.index)),:]).T]).min()), list(self.customers.demand))])
+                        tempmin = np.minimum(min, self.distances.iloc[len(range(self.index)),:])
+                        start_time = time.process_time()
+                        self.z = self.z_fix + sum([a * b for a, b in zip(list(tempmin), list(self.customers.demand))])
                         if self.z < self.z_new:
                             self.z_new = self.z
                             self.i_low = self.index
             if self.z_new < self.z_old:
                 self.locations.loc[self.locations.index[self.i_low], 'open'] = 1
                 self.I = self.I.append(pd.DataFrame(self.distances.iloc[self.i_low,:]).T, sort=False)
+                min = self.I.min().values
+        print(start_time - time.process_time())
         return self.z_old, self.locations
 
     def drop_heuristic(self):
