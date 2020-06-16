@@ -45,11 +45,11 @@ class adddrop:
             self.counter += 1
             print("Number of iterations: ", self.counter)
             self.z_old = self.z_new
+            ti = time.time()
             for self.index, self.row in self.locations.iterrows():
                 if self.row['open'] == 0:
                         self.z_fix = self.row['fixed_costs'] + self.locations.loc[self.locations['open'] == 1, 'fixed_costs'].sum()
                         tempmin = np.minimum(min, self.distances.iloc[len(range(self.index)),:])
-                        start_time = time.process_time()
                         self.z = self.z_fix + sum([a * b for a, b in zip(list(tempmin), list(self.customers.demand))])
                         if self.z < self.z_new:
                             self.z_new = self.z
@@ -58,6 +58,8 @@ class adddrop:
                 self.locations.loc[self.locations.index[self.i_low], 'open'] = 1
                 self.I = self.I.append(pd.DataFrame(self.distances.iloc[self.i_low,:]).T, sort=False)
                 min = self.I.min().values
+            print(time.time()-ti)
+
         return self.z_old, self.locations
 
     def drop_heuristic(self):
