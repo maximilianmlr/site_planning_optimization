@@ -29,8 +29,6 @@ class cust:
         else:
             self.customers['demand'] = self.rng # was 0
 
-
-
 class adddrop:
     def __init__(self, z_old, locations, distances, customers):
         self.I = pd.DataFrame()
@@ -41,10 +39,8 @@ class adddrop:
         self.distances = distances.copy()
         self.customers = customers.copy()
 
-    
     def add_heuristic(self):
         min = 9999999999
-        start_time = time.process_time()
         while self.z_new < self.z_old:
             self.counter += 1
             print("Number of iterations: ", self.counter)
@@ -62,11 +58,11 @@ class adddrop:
                 self.locations.loc[self.locations.index[self.i_low], 'open'] = 1
                 self.I = self.I.append(pd.DataFrame(self.distances.iloc[self.i_low,:]).T, sort=False)
                 min = self.I.min().values
-        print(start_time - time.process_time())
         return self.z_old, self.locations
 
     def drop_heuristic(self):
         self.locations['open'] = 1
+        min = 1
         self.I = self.distances
         self.z_new = self.locations['fixed_costs'].sum() + sum([a * b for a, b in zip(list(self.distances.min()), list(self.customers.demand))])
         while self.z_new < self.z_old:
@@ -76,15 +72,16 @@ class adddrop:
             for self.index, self.row in self.locations.iterrows():
                 if self.row['open'] == 1:
                         self.z_fix = self.locations.loc[self.locations['open'] == 1, 'fixed_costs'].sum() - self.row['fixed_costs'] 
-                        self.z = self.z_fix + sum([a * b for a, b in zip(list(self.I.drop([self.row['plz']]).min()), list(self.customers.demand))])
+                        tempmin = np.minimum(min, self.distances.iloc[len(range(self.index)),:])
+                        self.z = self.z_fix + sum([a * b for a, b in zip(list(tempmin), list(self.customers.demand))])
                         if self.z < self.z_new:
                             self.z_new = self.z
                             self.i_low = self.row['plz']
             if self.z_new < self.z_old:
                 self.locations.loc[self.locations['plz'] == self.i_low, 'open'] = 0
                 self.I = self.I.drop([self.i_low], axis = 0)
+                min = self.I.min().values
         return self.z_old, self.locations
-
 
 class simulated_annealing:
     def __init__(self, locations, distances, customers, alpha, t_end, multiplyer):
@@ -198,12 +195,6 @@ class late_acceptance:
         return self.best_costs, self.best.loc[self.best['open'] == 1]
 
 
-
-
-
-        
-
-
 print("Reading data...")
 # Read in Datasets
 
@@ -246,10 +237,12 @@ cust = cust('low', df_cust, rng_demand_high)
 customers_df = cust.customers
 
 heuristics = adddrop(100000000000, locations_df, distances, customers_df)
+start_time = time.time()
 print("\nStarting add heuristic calculation...\n")
 z, df = heuristics.add_heuristic()
 open = df.loc[df['open'] == 1]
 print('Gesamtkosten: ', z, '\nEröffnete Standorte: \n', open)
+print(time.time() - start_time)
 
 
 # heuristics = adddrop(100000000000, locations_df, distances, customers_df)
