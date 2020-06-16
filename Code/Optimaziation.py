@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import csv
+import time as time
 from geopy.distance import vincenty
 import random
 from math import exp
@@ -32,7 +33,7 @@ class cust:
 
 class adddrop:
     def __init__(self, z_old, locations, distances, customers):
-        self.I = pd.DataFrame()
+        self.I = pd.DataFrame(index = distances.index, columns= distances.columns)
         self.z_old = z_old
         self.z_new = z_old-1
         self.counter = 0
@@ -50,16 +51,18 @@ class adddrop:
                 if self.row['open'] == 0:
                         self.z_fix = self.row['fixed_costs'] + self.locations.loc[self.locations['open'] == 1, 'fixed_costs'].sum()
                         start_time = time.process_time()
-                        i_temp = self.I.append(self.distances.iloc[self.index,:]).min()
+                        self.I.loc[self.row['plz']] = self.distances.loc[self.row['plz']]
+                        min = self.I.min()
                         end_time = time.process_time()
                         print("Time in seconds for add heuristic calculation:", end_time - start_time)
-                        self.z = self.z_fix + sum([a * b for a, b in zip(i_temp, self.customers.demand.T)])
+                        self.z = self.z_fix + sum([a * b for a, b in zip(min, self.customers.demand.T)])
+                        self.I.loc[self.row['plz']] = np.nan
                         if self.z < self.z_new:
                             self.z_new = self.z
                             self.i_low = self.index
             if self.z_new < self.z_old:
                 self.locations.loc[self.locations.index[self.i_low], 'open'] = 1
-                self.I = self.I.append(self.distances.iloc[self.i_low,:].T, sort=False)
+                self.I.loc[self.locations.iloc[i_low].plz] = self.distances.iloc[self.i_low,:].T
         return self.z_old, self.locations
 
     def drop_heuristic(self):
