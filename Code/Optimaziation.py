@@ -45,14 +45,13 @@ class adddrop:
             self.counter += 1
             print("\rNumber of iterations: ", self.counter, end="")
             self.z_old = self.z_new
-            for self.index, self.row in self.locations.iterrows():
-                if self.row['open'] == 0:
-                        self.z_fix = self.row['fixed_costs'] + self.locations.loc[self.locations['open'] == 1, 'fixed_costs'].sum()
-                        tempmin = np.minimum(min, self.distances.iloc[len(range(self.index)),:])
-                        self.z = self.z_fix + sum([a * b for a, b in zip(list(tempmin), list(self.customers.demand))])
-                        if self.z < self.z_new:
-                            self.z_new = self.z
-                            self.i_low = self.index
+            for self.index, self.row in self.locations.loc[self.locations['open']==0].iterrows():
+                self.z_fix = self.row['fixed_costs'] + self.locations.loc[self.locations['open'] == 1, 'fixed_costs'].sum()
+                tempmin = np.minimum(min, self.distances.iloc[len(range(self.index)),:])
+                self.z = self.z_fix + sum([a * b for a, b in zip(list(tempmin), list(self.customers.demand))])
+                if self.z < self.z_new:
+                    self.z_new = self.z
+                    self.i_low = self.index
             if self.z_new < self.z_old:
                 self.locations.loc[self.locations.index[self.i_low], 'open'] = 1
                 self.I = self.I.append(pd.DataFrame(self.distances.iloc[self.i_low,:]).T, sort=False)
@@ -62,22 +61,20 @@ class adddrop:
 
     def drop_heuristic(self):
         self.locations['open'] = 1
-        min = self.distances.values
         self.I = self.distances
         self.z_new = self.locations['fixed_costs'].sum() + sum([a * b for a, b in zip(list(self.distances.min()), list(self.customers.demand))])
         while self.z_new < self.z_old:
             self.counter += + 1
             print("\rNumber of iterations: ", self.counter, end="")
             self.z_old = self.z_new
-            for self.index, self.row in self.locations.iterrows():
-                if self.row['open'] == 1:
-                        self.z_fix = self.locations.loc[self.locations['open'] == 1, 'fixed_costs'].sum() - self.row['fixed_costs'] 
-                        tempmin = np.delete(min, self.index, axis=0)
-                        tempmin = np.min(tempmin, axis=0)
-                        self.z = self.z_fix + sum([a * b for a, b in zip(list(tempmin), list(self.customers.demand))])
-                        if self.z < self.z_new:
-                            self.z_new = self.z
-                            self.i_low = self.row['plz']
+            for self.index, self.row in self.locations.loc[self.locations['open']==1].iterrows():
+                self.z_fix = self.locations.loc[self.locations['open'] == 1, 'fixed_costs'].sum() - self.row['fixed_costs'] 
+                tempmin = self.I.loc[self.I.index != self.row['plz']]
+                tempmin = np.min(tempmin, axis=0)
+                self.z = self.z_fix + sum([a * b for a, b in zip(list(tempmin), list(self.customers.demand))])
+                if self.z < self.z_new:
+                    self.z_new = self.z
+                    self.i_low = self.row['plz']
             if self.z_new < self.z_old:
                 self.locations.loc[self.locations['plz'] == self.i_low, 'open'] = 0
                 self.I = self.I.drop([self.i_low], axis = 0)
@@ -199,7 +196,7 @@ class late_acceptance:
 print("Reading data...")
 # Read in Datasets
 
-bugfixing = 0
+bugfixing = 1
 
 if bugfixing == 0:
     plz_nrw = pd.read_csv('https://raw.githubusercontent.com/mexemt/location_optimization/master/Datasets/plz_nrw.csv', encoding='unicode_escape')
@@ -237,13 +234,13 @@ df_cust = plz_nrw.copy()
 cust = cust('low', df_cust, rng_demand_high)
 customers_df = cust.customers
 
-heuristics = adddrop(100000000000, locations_df, distances, customers_df)
-start_time = time.time()
-print("\nStarting add heuristic calculation...")
-z, df = heuristics.add_heuristic()
-open = df.loc[df['open'] == 1]
-print('\nGesamtkosten: ', z, '\nEröffnete Standorte: \n', open)
-print("Computation time add heuristic: ", round(time.time() - start_time, 2), "seconds.")
+# heuristics = adddrop(100000000000, locations_df, distances, customers_df)
+# start_time = time.time()
+# print("\nStarting add heuristic calculation...")
+# z, df = heuristics.add_heuristic()
+# open = df.loc[df['open'] == 1]
+# print('\nGesamtkosten: ', z, '\nEröffnete Standorte: \n', open)
+# print("Computation time add heuristic: ", round(time.time() - start_time, 2), "seconds.")
 
 
 heuristics = adddrop(100000000000, locations_df, distances, customers_df)
