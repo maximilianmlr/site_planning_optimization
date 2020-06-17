@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import csv
+import time as time
 from geopy.distance import vincenty
 import random
 from math import exp
@@ -28,8 +29,6 @@ class cust:
         else:
             self.customers['demand'] = self.rng # was 0
 
-
-
 class adddrop:
     def __init__(self, z_old, locations, distances, customers):
         self.I = pd.DataFrame()
@@ -40,48 +39,50 @@ class adddrop:
         self.distances = distances.copy()
         self.customers = customers.copy()
 
-    
     def add_heuristic(self):
+        min = 9999999999
         while self.z_new < self.z_old:
             self.counter += 1
-            print("Number of iterations: ", self.counter)
+            print("\rNumber of iterations: ", self.counter, end="")
             self.z_old = self.z_new
             for self.index, self.row in self.locations.iterrows():
                 if self.row['open'] == 0:
                         self.z_fix = self.row['fixed_costs'] + self.locations.loc[self.locations['open'] == 1, 'fixed_costs'].sum()
-                        start_time = time.process_time()
-                        i_temp = self.I.append(self.distances.iloc[self.index,:]).min()
-                        end_time = time.process_time()
-                        print("Time in seconds for add heuristic calculation:", end_time - start_time)
-                        self.z = self.z_fix + sum([a * b for a, b in zip(i_temp, self.customers.demand.T)])
+                        tempmin = np.minimum(min, self.distances.iloc[len(range(self.index)),:])
+                        self.z = self.z_fix + sum([a * b for a, b in zip(list(tempmin), list(self.customers.demand))])
                         if self.z < self.z_new:
                             self.z_new = self.z
                             self.i_low = self.index
             if self.z_new < self.z_old:
                 self.locations.loc[self.locations.index[self.i_low], 'open'] = 1
-                self.I = self.I.append(self.distances.iloc[self.i_low,:].T, sort=False)
+                self.I = self.I.append(pd.DataFrame(self.distances.iloc[self.i_low,:]).T, sort=False)
+                min = self.I.min().values
+
         return self.z_old, self.locations
 
     def drop_heuristic(self):
         self.locations['open'] = 1
+        min = self.distances.values
         self.I = self.distances
         self.z_new = self.locations['fixed_costs'].sum() + sum([a * b for a, b in zip(list(self.distances.min()), list(self.customers.demand))])
         while self.z_new < self.z_old:
             self.counter += + 1
-            print("Number of iterations: ", self.counter)
+            print("\rNumber of iterations: ", self.counter, end="")
             self.z_old = self.z_new
             for self.index, self.row in self.locations.iterrows():
                 if self.row['open'] == 1:
                         self.z_fix = self.locations.loc[self.locations['open'] == 1, 'fixed_costs'].sum() - self.row['fixed_costs'] 
-                        self.z = self.z_fix + sum([a * b for a, b in zip(list(self.I.drop([self.row['plz']]).min()), list(self.customers.demand))])
+                        tempmin = np.delete(min, np.where(self.row), axis=0)
+                        tempmin = np.min(tempmin, axis=0)
+                        self.z = self.z_fix + sum([a * b for a, b in zip(list(tempmin), list(self.customers.demand))])
                         if self.z < self.z_new:
                             self.z_new = self.z
                             self.i_low = self.row['plz']
             if self.z_new < self.z_old:
                 self.locations.loc[self.locations['plz'] == self.i_low, 'open'] = 0
                 self.I = self.I.drop([self.i_low], axis = 0)
+                min = self.I.values
         return self.z_old, self.locations
-
 
 class simulated_annealing:
     def __init__(self, locations, distances, customers, alpha, t_end, multiplyer):
@@ -128,14 +129,14 @@ class simulated_annealing:
                 if self.costs < self.best_costs:
                     self.best_costs = self.costs
                     self.best = self.xe.copy()
-                    print("New best costs found: ", "{:.2f}".format(self.best_costs))
+                    print("\rNew best costs found: ", "{:.2f}".format(self.best_costs), end='')
             else:
                 expo = exp((-(self.costs-self.initial_costs))/self.T)
                 if random.random() <= expo:
                     self.initial_costs = self.costs
                     self.solution = self.xe.copy()
             self.T = self.alpha * self.T
-            print("Temperature: ", self.T, end="\r", flush=True)
+            print("\rTemperature: ", self.T, end="")
         return self.best_costs, self.solution.loc[self.solution['open'] == 1]
 
 class late_acceptance:
@@ -183,7 +184,7 @@ class late_acceptance:
             v = i
             self.index = v % self.l
             k += 1
-            print(k, self.best_costs, end = '\r', flush = True)
+            print("\r", k, self.best_costs, end = '')
             if self.costs <= self.list[self.index]:
                 self.start = self.xe
                 self.list[self.index] = self.costs
@@ -195,16 +196,10 @@ class late_acceptance:
         return self.best_costs, self.best.loc[self.best['open'] == 1]
 
 
-
-
-
-        
-
-
 print("Reading data...")
 # Read in Datasets
 
-bugfixing = 0
+bugfixing = 1
 
 if bugfixing == 0:
     plz_nrw = pd.read_csv('https://raw.githubusercontent.com/mexemt/location_optimization/master/Datasets/plz_nrw.csv', encoding='unicode_escape')
@@ -220,13 +215,13 @@ else:
 distances = pd.DataFrame(distances)
 
 # Cost and Demand
-rng_cost_fx_low = range(100000, 300000)
+rng_cost_fx_low = range(150000, 500000)
 if bugfixing == 0:
     rng_cost_fx_high = range(1000000, 3000000)
 else:
     rng_cost_fx_high = (2, 4, 6)
 
-rng_demand_low = range(100, 300)
+rng_demand_low = range(150, 300)
 if bugfixing == 0:
     rng_demand_high = range(1000, 3000)
 else:
@@ -243,27 +238,39 @@ cust = cust('low', df_cust, rng_demand_high)
 customers_df = cust.customers
 
 heuristics = adddrop(100000000000, locations_df, distances, customers_df)
-print("\nStarting add heuristic calculation...\n")
+start_time = time.time()
+print("\nStarting add heuristic calculation...")
 z, df = heuristics.add_heuristic()
 open = df.loc[df['open'] == 1]
-print('Gesamtkosten: ', z, '\nEröffnete Standorte: \n', open)
+print('\nGesamtkosten: ', z, '\nEröffnete Standorte: \n', open)
+print("Computation time add heuristic: ", round(time.time() - start_time, 2), "seconds.")
 
 
-# heuristics = adddrop(100000000000, locations_df, distances, customers_df)
-# print("Starting drop heuristic calculation...")
-# z, open = heuristics.drop_heuristic()
-# print('Gesamtkosten: ', z, "\nGeöffnete Standorte: \n", open)
+heuristics = adddrop(100000000000, locations_df, distances, customers_df)
+start_time = time.time()
+print("\nStarting drop heuristic calculation...")
+z, df = heuristics.drop_heuristic()
+open = df.loc[df['open'] == 1]
+print('\nGesamtkosten: ', z, "\nGeöffnete Standorte: \n", open)
+print("Computation time drop heuristic: ", round(time.time() - start_time, 2), "seconds.")
+
 
 input_sa = df
-print("\nStarting simulated annealing optimaziation...\n")
+start_time = time.time()
+print("\nStarting simulated annealing optimaziation...")
 simann = simulated_annealing(input_sa, distances, customers_df, 0.999, 1, 1.5)
 z, open = simann.calculate()
-print('Gesamtkosten: ', z, '\nEröffnete Standorte: \n', open)
+print('\nGesamtkosten: ', z, '\nEröffnete Standorte: \n', open)
+print("Computation time simulated annealing optimaziation: ", round(time.time() - start_time, 2), "seconds.")
+
 
 input_la = df
-print("\nStarting late acceptance optimaziation...\n")
+start_time = time.time()
+print("\nStarting late acceptance optimaziation...")
 lateacc = late_acceptance(input_la, distances, customers_df, 20, 10000)
 z, open = lateacc.calculate()
-print('Gesamtkosten: ', z, '\nEröffnete Standorte: \n', open)
+print('\nGesamtkosten: ', z, '\nEröffnete Standorte: \n', open)
+print("Computation time late acceptance optimaziation: ", round(time.time() - start_time, 2), "seconds.")
+
 
 
