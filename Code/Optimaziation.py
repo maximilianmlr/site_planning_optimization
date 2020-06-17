@@ -31,7 +31,7 @@ class cust:
 
 class adddrop:
     def __init__(self, z_old, locations, distances, customers):
-        self.I = pd.DataFrame()
+        self.I = pd.DataFrame(index = distances.index, columns= distances.columns)
         self.z_old = z_old
         self.z_new = z_old-1
         self.counter = 0
