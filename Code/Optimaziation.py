@@ -78,7 +78,6 @@ class adddrop:
             if self.z_new < self.z_old:
                 self.locations.loc[self.locations['plz'] == self.i_low, 'open'] = 0
                 self.I = self.I.drop([self.i_low], axis = 0)
-                min = self.I.values
         return self.z_old, self.locations
 
 class simulated_annealing:
@@ -196,7 +195,7 @@ class late_acceptance:
 print("Reading data...")
 # Read in Datasets
 
-bugfixing = 1
+bugfixing = 0
 
 if bugfixing == 0:
     plz_nrw = pd.read_csv('https://raw.githubusercontent.com/mexemt/location_optimization/master/Datasets/plz_nrw.csv', encoding='unicode_escape')
@@ -224,8 +223,7 @@ if bugfixing == 0:
 else:
     rng_demand_high = (5, 6, 4)
 
-# Add/Drop Heuristik
-# Start Add-Heuristik
+
 df_loc = plz_nrw.copy()
 loc = loc('low', df_loc, rng_cost_fx_high)
 locations_df = loc.locations
@@ -234,13 +232,16 @@ df_cust = plz_nrw.copy()
 cust = cust('low', df_cust, rng_demand_high)
 customers_df = cust.customers
 
-# heuristics = adddrop(100000000000, locations_df, distances, customers_df)
-# start_time = time.time()
-# print("\nStarting add heuristic calculation...")
-# z, df = heuristics.add_heuristic()
-# open = df.loc[df['open'] == 1]
-# print('\nGesamtkosten: ', z, '\nEröffnete Standorte: \n', open)
-# print("Computation time add heuristic: ", round(time.time() - start_time, 2), "seconds.")
+# Add/Drop Heuristik
+# Start Add-Heuristik
+
+heuristics = adddrop(100000000000, locations_df, distances, customers_df)
+start_time = time.time()
+print("\nStarting add heuristic calculation...")
+z, df = heuristics.add_heuristic()
+open = df.loc[df['open'] == 1]
+print('\nGesamtkosten: ', z, '\nEröffnete Standorte: \n', open)
+print("Computation time add heuristic: ", round(time.time() - start_time, 2), "seconds.")
 
 
 heuristics = adddrop(100000000000, locations_df, distances, customers_df)
@@ -248,7 +249,7 @@ start_time = time.time()
 print("\nStarting drop heuristic calculation...")
 z, df = heuristics.drop_heuristic()
 open = df.loc[df['open'] == 1]
-print('\nGesamtkosten: ', z, "\nGeöffnete Standorte: \n", open)
+print('\nGesamtkosten: ', z, "\nEröffnete Standorte: \n", open)
 print("Computation time drop heuristic: ", round(time.time() - start_time, 2), "seconds.")
 
 
