@@ -6,28 +6,6 @@ from geopy.distance import vincenty
 import random
 from math import exp
 
-class loc:
-    def __init__(self, name, data, rng_l):
-        self.name = name
-        self.locations = data
-        self.rng = rng_l
-        self.locations['open'] = 0
-        if bugfixing == 0:
-            self.locations['fixed_costs'] = 0 # was 0
-            self.locations['fixed_costs'] = [random.choice(self.rng) for x in self.locations['fixed_costs']]
-        else:
-            self.locations['fixed_costs'] = self.rng # was 0
-
-class cust:
-    def __init__(self, name, data, rng_c):
-        self.name = name
-        self.customers = data
-        self.rng = rng_c
-        if bugfixing == 0:
-            self.customers['demand'] = 0
-            self.customers['demand'] = [random.choice(self.rng) for x in self.customers['demand']]
-        else:
-            self.customers['demand'] = self.rng # was 0
 
 class adddrop:
     def __init__(self, z_old, locations, distances, customers):
@@ -196,6 +174,8 @@ print("Reading data...")
 # Read in Datasets
 
 bugfixing = 0
+fixcost = 'low'
+demand = 'low'
 
 if bugfixing == 0:
     plz_nrw = pd.read_csv('https://raw.githubusercontent.com/mexemt/location_optimization/master/Datasets/plz_nrw.csv', encoding='unicode_escape')
@@ -211,26 +191,18 @@ else:
 distances = pd.DataFrame(distances)
 
 # Cost and Demand
-rng_cost_fx_low = range(150000, 500000)
-if bugfixing == 0:
-    rng_cost_fx_high = range(1000000, 3000000)
+
+if fixcost == 'low'
+    locations_df = pd.read_csv('https://raw.githubusercontent.com/mexemt/location_optimization/master/Datasets/locations_df_low.csv', encoding='unicode_escape')
 else:
-    rng_cost_fx_high = (2, 4, 6)
+    locations_df = pd.read_csv('https://raw.githubusercontent.com/mexemt/location_optimization/master/Datasets/locations_df_high.csv', encoding='unicode_escape')
 
-rng_demand_low = range(150, 300)
-if bugfixing == 0:
-    rng_demand_high = range(1000, 3000)
+
+if demand == 'low'
+    df_cust = pd.read_csv('https://raw.githubusercontent.com/mexemt/location_optimization/master/Datasets/customers_df_low.csv', encoding='unicode_escape')
 else:
-    rng_demand_high = (5, 6, 4)
+    df_cust = pd.read_csv('https://raw.githubusercontent.com/mexemt/location_optimization/master/Datasets/customers_df_high.csv', encoding='unicode_escape')
 
-
-df_loc = plz_nrw.copy()
-loc = loc('low', df_loc, rng_cost_fx_high)
-locations_df = loc.locations
-
-df_cust = plz_nrw.copy()
-cust = cust('low', df_cust, rng_demand_high)
-customers_df = cust.customers
 
 # Add/Drop Heuristik
 # Start Add-Heuristik
