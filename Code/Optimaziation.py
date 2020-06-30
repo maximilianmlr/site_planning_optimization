@@ -70,9 +70,9 @@ class simulated_annealing:
         self.T_end = t_end
     
     def create_neighbor(self, locations):
-        i = random.sample(list(locations.loc[locations['open']==1].index), k = 5)
+        i = random.sample(list(locations.loc[locations['open']==1].index), k = 1)
         i = random.choice(i)
-        k = random.sample(list(locations.loc[locations['open']==0].index), k = 5)
+        k = random.sample(list(locations.loc[locations['open']==0].index), k = 1)
         k = random.choice(k)
         self.neighbor = locations.copy()
         self.neighbor.loc[i, 'open'] = 0
@@ -133,9 +133,9 @@ class late_acceptance:
         return self.costs
 
     def create_neighbor(self, locations):
-        i = random.sample(list(locations.loc[locations['open']==1].index), k = 5)
+        i = random.sample(list(locations.loc[locations['open']==1].index), k = 1)
         i = random.choice(i)
-        k = random.sample(list(locations.loc[locations['open']==0].index), k = 5)
+        k = random.sample(list(locations.loc[locations['open']==0].index), k = 1)
         k = random.choice(k)
         self.neighbor = locations.copy()
         self.neighbor.loc[i, 'open'] = 0
@@ -150,10 +150,8 @@ class late_acceptance:
         k = 0
         self.xe = self.best
         while i <= 10 and k <= self.max_iter:
-            #print(self.list, end = '\r', flush = True)
             self.xe = self.create_neighbor(self.start)
             self.costs = self.cal_costs(self.xe, self.distances, self.customers)
-            #print(self.costs, self.best_costs, end = '\r', flush = True)
             v = i
             self.index = v % self.l
             k += 1
@@ -165,7 +163,6 @@ class late_acceptance:
                     self.best = self.xe
                     self.best_costs = self.costs
                     i += 1
-                    #print(i, self.best_costs, end = '\r', flush = True)
         return self.best_costs, self.best.loc[self.best['open'] == 1]
 
 
@@ -248,7 +245,7 @@ print("Computation time simulated annealing optimaziation: ", round(time.time() 
 input_la = sol_add.copy()
 start_time = time.time()
 print("\nStarting late acceptance optimaziation with add dataset...")
-lateacc = late_acceptance(input_la, distances, customers_df, 20, 20000)
+lateacc = late_acceptance(input_la, distances, customers_df, 5, 20000)
 z, open = lateacc.calculate()
 print('\nGesamtkosten: ', z, '\nEröffnete Standorte: \n', open)
 print("Computation time late acceptance optimaziation: ", round(time.time() - start_time, 2), "seconds.")
