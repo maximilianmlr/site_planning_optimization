@@ -22,6 +22,5 @@
         <li>Run the code to perform optimization using different algorithms on the provided datasets.</li>
         <li>Analyze the output to compare the performance of different algorithms in solving the facility location problem.</li>
     </ol>
-    <p>Please note that this code is intended for educational and illustrative purposes and may require further customization for specific use cases.</p>
 </body>
 </html>
